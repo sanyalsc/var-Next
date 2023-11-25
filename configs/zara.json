@@ -1,0 +1,70 @@
+{
+"layers":
+{"encoder":[
+    {"conv":
+        { "in_channel": 3,
+            "out_channel": 32,
+            "kernel_size": 3,
+            "kwargs":{"stride":2}
+        }
+    },
+    {"conv":
+        { "in_channel": 32,
+            "out_channel": 64,
+            "kernel_size": 5,
+            "kwargs":{"stride":2}
+        }
+    },
+    {"conv":
+        { "in_channel": 64,
+            "out_channel": 128,
+            "kernel_size": 5,
+            "kwargs":{"stride":2}
+        }
+    },
+    {"conv":
+        { "in_channel": 128,
+            "out_channel": 256,
+            "kernel_size": 3,
+            "kwargs":{"stride":1}
+        }
+    }
+],
+"mu": 512,
+"var":512,
+"latent":1024,
+
+"unflatten":[75,40,256],
+"decoder":[
+    {"conv":
+        { "in_channel": 256,
+            "out_channel": 128,
+            "kernel_size": 3,
+            "kwargs":{"stride":1}
+        }
+    },
+    {"conv":
+        { "in_channel": 64,
+            "out_channel": 128,
+            "kernel_size": 10,
+            "kwargs":{}
+        }
+    },
+    {"conv":
+        { "in_channel": 256,
+            "out_channel": 3,
+            "kernel_size": 20,
+            "kwargs":{}
+        }
+    },
+    {"conv":
+        { "in_channel": 128,
+            "out_channel": 256,
+            "kernel_size": 10,
+            "kwargs":{}
+        }
+    },
+
+]
+
+}
