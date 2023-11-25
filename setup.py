@@ -8,7 +8,7 @@ setuptools.setup(name='varnext',
       author_email='sanyalster@gmail.com',
       license='MIT',
       packages=['var_next'],
-      package_dir={'':'src'}
+      package_dir={'':'src'},
       install_requires=[
       ])
 
