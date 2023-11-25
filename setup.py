@@ -7,7 +7,7 @@ setuptools.setup(name='var-next',
       author='Shantanu Sanyal',
       author_email='sanyalster@gmail.com',
       license='MIT',
-      packages=setuptools.find_packages("src"),
+      packages=setuptools.find_namespace_packages(),
       package_dir={'':"src"},
       install_requires=[
       ])
