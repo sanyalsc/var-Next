@@ -105,4 +105,4 @@ def load_args():
 
 if __name__ == '__main__':
     args = load_args()
-    train(args.net_cfg,args.data,args.output)
+    train(args.net_cfg,args.data,args.n_epoch,args.output)
