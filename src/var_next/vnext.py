@@ -30,6 +30,7 @@ class varNext(torch.nn.Module):
 
     """
     def __init__(self, cfg_file):
+        super(varNext, self).__init__()
         if type(cfg_file)!= dict:
             with open(cfg_file,'r') as f:
                 cfg_file = json.load(f)
@@ -39,14 +40,11 @@ class varNext(torch.nn.Module):
         enc_shapes = [cfg_file['input_shape']]
         for layer in layers['encoder']:
             conv = layer['conv']
-            if layer['activation']=='leakyrelu':
-                activation = nn.LeakyReLU()
-            else:
-                activation = nn.ReLU()  
+            activation = nn.LeakyReLU()
             enc_layers.append(
                 nn.Sequential(
-                    nn.Conv2d(conv['in_channels'],conv['out_channels'],conv['kernel_size'],**conv),
-                    nn.BatchNorm2d(conv['out_channels']),
+                    nn.Conv2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],conv['stride']),
+                    nn.BatchNorm2d(conv['out_channel']),
                     activation,
                     torch.nn.Dropout(p=0.1)
             )
@@ -67,8 +65,8 @@ class varNext(torch.nn.Module):
         
         # Build decoder
         dec_layers = []
-        unflatten_dim = [enc_shapes[-1][0],enc_shapes[-1][1],layers['encoder'][-1]['out_channels']]
-        self.d1 = nn.Linear(layers['latent'],torch.prod(layers['unflatten']))
+        unflatten_dim = [enc_shapes[-1][0],enc_shapes[-1][1],layers['encoder'][-1]['conv']['out_channel']]
+        self.d1 = nn.Linear(layers['latent'],torch.prod(torch.tensor(unflatten_dim)))
         self.unflatten = nn.Unflatten(dim=1, unflattened_size=unflatten_dim)
 
         for layer in layers['decoder']:
@@ -76,8 +74,8 @@ class varNext(torch.nn.Module):
             activation = nn.LeakyReLU()
             dec_layers.append(
                 nn.Sequential(
-                    nn.ConvTranspose2D(conv['in_channels'],conv['out_channels'],conv['kernel_size'],**conv),
-                    nn.BatchNorm2d(conv['out_channels']),
+                    nn.ConvTranspose2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],conv['stride']),
+                    nn.BatchNorm2d(conv['out_channel']),
                     activation,
                     torch.nn.Dropout(p=0.1)
             )
@@ -86,7 +84,7 @@ class varNext(torch.nn.Module):
         self.decoder = nn.Sequential(*enc_layers)
 
 
-    def encode(x):
+    def encode(self,x):
         x = self.encoder(x)
         mu = self.mu(x)
         sigma = torch.exp(self.sig(x))
@@ -94,12 +92,12 @@ class varNext(torch.nn.Module):
         self.kl = (sigma**2 + mu**2 - torch.log(sigma) - 1/2).sum()
         return z
 
-    def decode(x):
+    def decode(self,x):
         x = self.d1(x)
         x = self.unflatten(x)
         return self.decoder(x)
 
-    def forward(x):
+    def forward(self,x):
         self.encode(x)
         return self.decode(x)
 
