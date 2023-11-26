@@ -76,13 +76,13 @@ class varNext(torch.nn.Module):
         dec_layers = []
         self.d1 = nn.Sequential(
             nn.Linear(layers['latent'],torch.prod(torch.tensor(unflatten_dim))),
-            nn.LeakyReLU()
+            nn.ReLU()
         )
         self.unflatten = nn.Unflatten(dim=1, unflattened_size=unflatten_dim)
 
-        for layer in layers['decoder']:
+        for layer in layers['decoder'][:-1]:
             conv = layer['conv']
-            activation = nn.LeakyReLU()
+            activation = nn.ReLU()
             dec_layers.append(
                 nn.Sequential(
                     nn.ConvTranspose2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],**conv['kwargs']),
@@ -92,6 +92,14 @@ class varNext(torch.nn.Module):
             )
             )
         
+        #output layer
+        conv = layer['conv'][-1]
+        dec_layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],**conv['kwargs']),
+                nn.BatchNorm2d(conv['out_channel']),
+                nn.Sigmoid(),
+        )
         self.decoder = nn.Sequential(*dec_layers)
 
 
