@@ -1,3 +1,4 @@
+
 {"input_shape":[180,320],
 "learn_rate":1e-5,
 "layers":
@@ -32,9 +33,9 @@
         }
     }
 ],
-"mu": 512,
-"var":512,
-"latent":1024,
+"mu": 1024,
+"var":1024,
+"latent":2048,
 "decoder":[
     {"conv":
         { "in_channel": 256,

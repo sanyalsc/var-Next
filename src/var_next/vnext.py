@@ -61,13 +61,14 @@ class varNext(torch.nn.Module):
             nn.Linear(torch.prod(torch.tensor(unflatten_dim)),out_features=512),
             nn.LeakyReLU()
         )
+        print(f'Encoder shapes: {enc_shapes}')
         
         self.encoder = nn.Sequential(*enc_layers)
         self.mu = nn.Linear(layers['mu'],layers['latent'])
         self.sig = nn.Linear(layers['var'],layers['latent'])
-        self.N = torch.distributions.Normal(0, 1)
-        self.N.loc = self.N.loc.cuda() # hack to get sampling on the GPU
-        self.N.scale = self.N.scale.cuda()
+        
+        torch.nn.init.uniform_(self.sig.weight.data,-0.08,0.08)
+        
         self.kl = 0
         
         # Build decoder
@@ -95,19 +96,17 @@ class varNext(torch.nn.Module):
 
     def encode(self,x):
         x = self.encoder(x)
-        print(f'unflat enc: {x.shape}')
         x = torch.flatten(x,start_dim=1)
         x = self.pack_LL(x)
         mu = self.mu(x)
-        sigma = torch.exp(self.sig(x))
-        z = mu + sigma*self.N.sample(mu.shape)
-        self.kl = (sigma**2 + mu**2 - torch.log(sigma) - 1/2).sum()
+        sigma = self.sig(x)
+        z = mu + torch.exp(sigma)*torch.randn_like(mu).to(device)
+        self.kl = - 0.5 * torch.sum(1+ sigma - torch.square(mu) - torch.exp(sigma))
         return z
 
     def decode(self,x):
         x = self.d1(x)
         x = self.unflatten(x)
-        print(f' dec inp {x.shape}')
         return self.decoder(x)
 
     def forward(self,x):
