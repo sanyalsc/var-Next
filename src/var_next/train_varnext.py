@@ -49,3 +49,21 @@ def train_epoch(vae, device, dataloader, optimizer):
         train_loss+=loss.item()
 
     return train_loss / len(dataloader.dataset)
+
+
+def test_epoch(vae, device, dataloader):
+    # Set evaluation mode for encoder and decoder
+    vae.eval()
+    val_loss = 0.0
+    with torch.no_grad(): # No need to track the gradients
+        for x, _ in dataloader:
+            # Move tensor to the proper device
+            x = x.to(device)
+            # calc KL divergence
+            _ = vae.encoder(x)
+            # Decode data
+            x_hat = vae(x)
+            loss = ((x - x_hat)**2).sum() + vae.encoder.kl
+            val_loss += loss.item()
+
+    return val_loss / len(dataloader.dataset)

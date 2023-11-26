@@ -1,6 +1,6 @@
-{
-"layers":
 {"input_shape":[180,320],
+"layers":
+{
 "encoder":[
     {"conv":
         { "in_channel": 3,
