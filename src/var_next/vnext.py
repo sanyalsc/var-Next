@@ -58,8 +58,10 @@ class varNext(torch.nn.Module):
         
         #bottleneck
         unflatten_dim = [layers['encoder'][-1]['conv']['out_channel'],enc_shapes[layers['uf-l']][0],enc_shapes[layers['uf-l']][1]]
+        flatten_dim = [layers['encoder'][-1]['conv']['out_channel'],enc_shapes[-1][0],enc_shapes[-1][1]]
+        
         self.pack_LL = nn.Sequential(
-            nn.Linear(torch.prod(torch.tensor(unflatten_dim)),out_features=layers['mu']),
+            nn.Linear(torch.prod(torch.tensor(flatten_dim)),out_features=layers['mu']),
             nn.LeakyReLU()
         )
         print(f'Encoder shapes: {enc_shapes}')
