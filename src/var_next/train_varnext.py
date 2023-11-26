@@ -100,7 +100,7 @@ def load_args():
     parser.add_argument('--net-cfg',required=True,help='Network configuration')
     parser.add_argument('--data',required=True,help='Input directory of images')
     parser.add_argument('--output',default='/scratch/ejg8qa/360_results',help='output directory for results and weights')
-    parser.add_argument('--n-epoch',default=5,help='number of epochs')
+    parser.add_argument('--n-epoch',default=5,type=int,help='number of epochs')
     return parser.parse_args()
 
 if __name__ == '__main__':
