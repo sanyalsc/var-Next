@@ -29,12 +29,13 @@ class varNext(torch.nn.Module):
         .
 
     """
-    def __init__(self, cfg_file):
+    def __init__(self, cfg_file, device):
         super(varNext, self).__init__()
         if type(cfg_file)!= dict:
             with open(cfg_file,'r') as f:
                 cfg_file = json.load(f)
         layers = cfg_file['layers']
+        self.device = device
         # Build encoder
         enc_layers = []
         enc_shapes = [cfg_file['input_shape']]
@@ -100,7 +101,7 @@ class varNext(torch.nn.Module):
         x = self.pack_LL(x)
         mu = self.mu(x)
         sigma = self.sig(x)
-        z = mu + torch.exp(sigma)*torch.randn_like(mu).to(device)
+        z = mu + torch.exp(sigma)*torch.randn_like(mu).to(self.device)
         self.kl = - 0.5 * torch.sum(1+ sigma - torch.square(mu) - torch.exp(sigma))
         return z
 

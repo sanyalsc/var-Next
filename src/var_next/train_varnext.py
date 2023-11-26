@@ -28,10 +28,10 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
         cfg = json.load(cfi)
     train_loader, val_loader = set_up_dataset(data_dir)
 
-    model = varNext(cfg)
-    optim = torch.optim.Adam(model.parameters(), lr=cfg['learn_rate'], weight_decay=0.01)
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(f'Selected device: {device}')
+    model = varNext(cfg, device)
+    optim = torch.optim.Adam(model.parameters(), lr=cfg['learn_rate'], weight_decay=0.01)
 
     model.to(device)
     last_t = time.time()
