@@ -37,9 +37,7 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
     last_t = time.time()
     with open(os.path.join(output_dir,'logfile.txt'),'w') as rfi:
         for epoch in range(n_epoch):
-            kl = False
-            if epoch >1:
-                kl = True
+            kl = True
             train_loss = train_epoch(model,device,train_loader,optim, kl,rfi)
             val_loss = test_epoch(model,device,val_loader)
             rfi.write(f'\n EPOCH {epoch+1}/{n_epoch} took {time.time()-last_t}s: train loss {train_loss}, val loss {val_loss}')
@@ -85,8 +83,6 @@ def test_epoch(vae, device, dataloader):
         for x, _ in dataloader:
             # Move tensor to the proper device
             x = x.to(device)
-            # calc KL divergence
-            _ = vae.encoder(x)
             # Decode data
             y = vae(x)
             loss = torch.nn.functional.mse_loss(y,x,reduction='sum') + vae.kl
