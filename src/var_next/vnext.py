@@ -93,7 +93,7 @@ class varNext(torch.nn.Module):
             )
         
         #output layer
-        conv = layer['conv'][-1]
+        conv = layers['decoder'][-1]['conv']
         dec_layers.append(
             nn.Sequential(
                 nn.ConvTranspose2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],**conv['kwargs']),
