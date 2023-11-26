@@ -100,6 +100,7 @@ class varNext(torch.nn.Module):
                 nn.BatchNorm2d(conv['out_channel']),
                 nn.Sigmoid(),
         )
+        )
         self.decoder = nn.Sequential(*dec_layers)
 
 
