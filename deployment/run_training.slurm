@@ -2,18 +2,18 @@
 #SBATCH -A geomofdata
 #SBATCH -p gpu
 #SBATCH --gres=gpu:1
-#SBATCH -c 12
+#SBATCH -c 8
 #SBATCH -t 35:00:00
 #SBATCH --mem=64000
 
-REPO_ROOT=/scratch/ejg8qa/MLIA-2022-final
+REPO_ROOT=/scratch/ejg8qa/var-Next
 
-module load singularity pytorch/1.12.0
-#export PYTHONPATH=/scratch/ejg8qa/MONAI:/scratch/ejg8qa/MLIA-2022-final/src
+module load singularity pytorch/2.0.1
 
-singularity run $CONTAINERDIR/pytorch-1.12.0.sif -m pip install $REPO_ROOT
-singularity run --nv $CONTAINERDIR/pytorch-1.12.0.sif \
-$REPO_ROOT/src/swin/MLIA-main.py --train \
---net-cfg $REPO_ROOT/configs/basic.json \
---input /scratch/ejg8qa/CardiacImage_data/Training \
---output /scratch/ejg8qa/9_layer2
+singularity run $CONTAINERDIR/pytorch-2.0.1.sif -m pip install $REPO_ROOT
+singularity run --nv $CONTAINERDIR/pytorch-2.0.1.sif \
+$REPO_ROOT/src/var_next/train_varnext.py \
+--net-cfg $REPO_ROOT/configs/2048_latent.json \
+--input /scratch/ejg8qa/log_images_360 \
+--output /scratch/ejg8qa/vnext_results \
+--n-epoch 5
