@@ -34,7 +34,7 @@
     },
     {"conv":
         { "in_channel": 256,
-            "out_channel": 320,
+            "out_channel": 64,
             "kernel_size": 3,
             "kwargs":{"stride":1}
         }
