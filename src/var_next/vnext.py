@@ -50,6 +50,7 @@ class varNext(torch.nn.Module):
                     activation,
                     torch.nn.Dropout(p=0.1)
             )
+            )
             enc_shapes.append(
                 conv_output_shape(enc_shapes[-1],
                                   kernel_size = conv['kernel_size'],
@@ -79,6 +80,7 @@ class varNext(torch.nn.Module):
                     nn.BatchNorm2d(conv['out_channels']),
                     activation,
                     torch.nn.Dropout(p=0.1)
+            )
             )
         
         self.decoder = nn.Sequential(*enc_layers)

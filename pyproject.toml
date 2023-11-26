@@ -1,0 +1,22 @@
+[project]
+name = "varnext"
+version = "0.0.1"
+authors = [
+  { name="Shantanu Sanyal", email="sanyalster@gmail.com" },
+]
+description = "Next frame prediction with variational autoencoder"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.setuptools]
+
+package-dir = {"" = "src"}
+
+[project.urls]
+Homepage = "https://github.com/sanyalsc/var-Next"
+Issues = "https://github.com/sanyalsc/var-Next/issues"
