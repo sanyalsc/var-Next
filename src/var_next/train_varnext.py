@@ -19,9 +19,9 @@ def set_up_dataset(data_dir):
     return train_set, val_set
 
 
-def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'):
+def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results',beta=1):
     test_id = os.path.splitext(os.path.basename(cfg_file))[0]
-    output_dir = os.path.join(result_dir,test_id)
+    output_dir = os.path.join(result_dir,f'{test_id}_beta_{beta}')
     os.makedirs(output_dir,exist_ok=True)
     
     with open(cfg_file,'r') as cfi:
@@ -47,7 +47,7 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
     torch.save(model.state_dict(), os.path.join(output_dir,'model_wts.pt'))
 
 
-def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None):
+def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None, beta=1):
     # Set train mode for both the encoder and the decoder
     vae.train()
     train_loss = 0.0
@@ -57,9 +57,9 @@ def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None):
         x = x.to(device)
         y = vae(x)
         # Evaluate loss
-        loss = torch.nn.functional.mse_loss(y,x,reduction='sum')
+        l1 = torch.nn.functional.mse_loss(y,x,reduction='sum')
         if kl:
-            loss = loss + vae.kl
+            loss = l1 + beta*vae.kl
 
         # Backward pass
         optimizer.zero_grad()
@@ -67,7 +67,7 @@ def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None):
         optimizer.step()
         # Print batch loss
         if rfi:
-            rfi.write(f'\n partial train loss (single batch): {loss.item()}')
+            rfi.write(f'\n sb loss, mse:{loss.item()}, B*kl: {beta*vae.kl}')
 
         print(f'partial train loss (single batch): {loss.item()}\r')
         train_loss+=loss.item()
@@ -75,7 +75,7 @@ def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None):
     return train_loss / len(dataloader.dataset)
 
 
-def test_epoch(vae, device, dataloader):
+def test_epoch(vae, device, dataloader, beta=1):
     # Set evaluation mode for encoder and decoder
     vae.eval()
     val_loss = 0.0
@@ -85,7 +85,7 @@ def test_epoch(vae, device, dataloader):
             x = x.to(device)
             # Decode data
             y = vae(x)
-            loss = torch.nn.functional.mse_loss(y,x,reduction='sum') + vae.kl
+            loss = torch.nn.functional.mse_loss(y,x,reduction='sum') + beta*vae.kl
             val_loss += loss.item()
 
     return val_loss / len(dataloader.dataset)
@@ -97,6 +97,7 @@ def load_args():
     parser.add_argument('--data',required=True,help='Input directory of images')
     parser.add_argument('--output',default='/scratch/ejg8qa/360_results',help='output directory for results and weights')
     parser.add_argument('--n-epoch',default=5,type=int,help='number of epochs')
+    parser.add_argument('--beta',default=1,type=int,help='kld beta value')
     return parser.parse_args()
 
 if __name__ == '__main__':
