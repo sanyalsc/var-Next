@@ -47,7 +47,8 @@
         { "in_channel": 128,
             "out_channel": 64,
             "kernel_size": 5,
-            "kwargs":{"stride": 2}
+            "kwargs":{"stride": 2,
+        "output_padding":[0,1]}
         }
     },
     {"conv":
@@ -61,7 +62,7 @@
         { "in_channel": 32,
             "out_channel": 3,
             "kernel_size": 3,
-            "kwargs":{"stride":2,"padding":1}
+            "kwargs":{"stride":2,"output_padding":[1,1]}
         }
     }
 ]
