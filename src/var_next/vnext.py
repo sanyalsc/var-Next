@@ -40,10 +40,10 @@ class varNext(torch.nn.Module):
         enc_shapes = [cfg_file['input_shape']]
         for layer in layers['encoder']:
             conv = layer['conv']
-            activation = nn.LeakyReLU()
+            activation = nn.LeakyReLU()  
             enc_layers.append(
                 nn.Sequential(
-                    nn.Conv2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],conv['stride']),
+                    nn.Conv2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],**conv['kwargs']),
                     nn.BatchNorm2d(conv['out_channel']),
                     activation,
                     torch.nn.Dropout(p=0.1)
@@ -52,8 +52,15 @@ class varNext(torch.nn.Module):
             enc_shapes.append(
                 conv_output_shape(enc_shapes[-1],
                                   kernel_size = conv['kernel_size'],
-                                  stride = conv['stride'])
+                                  stride = conv['kwargs']['stride'])
                                 )
+        
+        #bottleneck
+        unflatten_dim = [layers['encoder'][-1]['conv']['out_channel'],enc_shapes[-1][0],enc_shapes[-1][1]]
+        self.pack_LL = nn.Sequential(
+            nn.Linear(torch.prod(torch.tensor(unflatten_dim)),out_features=512),
+            nn.LeakyReLU()
+        )
         
         self.encoder = nn.Sequential(*enc_layers)
         self.mu = nn.Linear(layers['mu'],layers['latent'])
@@ -65,8 +72,10 @@ class varNext(torch.nn.Module):
         
         # Build decoder
         dec_layers = []
-        unflatten_dim = [enc_shapes[-1][0],enc_shapes[-1][1],layers['encoder'][-1]['conv']['out_channel']]
-        self.d1 = nn.Linear(layers['latent'],torch.prod(torch.tensor(unflatten_dim)))
+        self.d1 = nn.Sequential(
+            nn.Linear(layers['latent'],torch.prod(torch.tensor(unflatten_dim))),
+            nn.LeakyReLU()
+        )
         self.unflatten = nn.Unflatten(dim=1, unflattened_size=unflatten_dim)
 
         for layer in layers['decoder']:
@@ -74,18 +83,21 @@ class varNext(torch.nn.Module):
             activation = nn.LeakyReLU()
             dec_layers.append(
                 nn.Sequential(
-                    nn.ConvTranspose2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],conv['stride']),
+                    nn.ConvTranspose2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],**conv['kwargs']),
                     nn.BatchNorm2d(conv['out_channel']),
                     activation,
                     torch.nn.Dropout(p=0.1)
             )
             )
         
-        self.decoder = nn.Sequential(*enc_layers)
+        self.decoder = nn.Sequential(*dec_layers)
 
 
     def encode(self,x):
         x = self.encoder(x)
+        print(f'unflat enc: {x.shape}')
+        x = torch.flatten(x,start_dim=1)
+        x = self.pack_LL(x)
         mu = self.mu(x)
         sigma = torch.exp(self.sig(x))
         z = mu + sigma*self.N.sample(mu.shape)
@@ -95,12 +107,13 @@ class varNext(torch.nn.Module):
     def decode(self,x):
         x = self.d1(x)
         x = self.unflatten(x)
+        print(f' dec inp {x.shape}')
         return self.decoder(x)
 
     def forward(self,x):
-        self.encode(x)
+        x = self.encode(x)
         return self.decode(x)
-
+    
 
 def conv_output_shape(h_w, kernel_size=1, stride=1, pad=0, dilation=1):
     from math import floor
