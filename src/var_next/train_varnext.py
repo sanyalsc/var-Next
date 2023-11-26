@@ -23,7 +23,8 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
     output_dir = os.path.join(result_dir,test_id)
     os.makedirs(output_dir,exist_ok=True)
     
-    cfg = json.load(cfg_file)
+    with open(cfg_file,'r') as cfi:
+        cfg = json.load(cfi)
     train_loader, val_loader = set_up_dataset(data_dir)
 
     model = varNext(cfg)
