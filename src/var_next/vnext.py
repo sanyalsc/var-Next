@@ -5,6 +5,7 @@
 import torch
 from torch import nn
 import json
+from torch.utils.checkpoint import checkpoint_sequential as ckpt
 
 class varNext(torch.nn.Module):
     """Variational Autoencoder definition.
@@ -107,7 +108,7 @@ class varNext(torch.nn.Module):
 
 
     def encode(self,x):
-        x = self.encoder(x)
+        x = ckpt(self.encoder(x),2,x)
         x = torch.flatten(x,start_dim=1)
         x = self.pack_LL(x)
         mu = self.mu(x)
