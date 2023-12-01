@@ -109,7 +109,7 @@ class varNext(torch.nn.Module):
 
     def encode(self,x):
         x.requires_grad=True
-        x = ckpt(self.encoder(x),2,x)
+        x = ckpt(self.encoder,2,x,use_reentrant=False)
         x = torch.flatten(x,start_dim=1)
         x = self.pack_LL(x)
         mu = self.mu(x)
