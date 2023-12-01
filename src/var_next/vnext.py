@@ -46,9 +46,9 @@ class varNext(torch.nn.Module):
             enc_layers.append(
                 nn.Sequential(
                     nn.Conv2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],**conv['kwargs']),
-                    nn.BatchNorm2d(conv['out_channel']),
+                    nn.BatchNorm2d(conv['out_channel'],momentum=torch.sqrt(0.1)),
                     activation,
-                    torch.nn.Dropout(p=0.1)
+                    #torch.nn.Dropout(p=0.1)
             )
             )
             enc_shapes.append(
@@ -91,7 +91,7 @@ class varNext(torch.nn.Module):
                     nn.ConvTranspose2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],**conv['kwargs']),
                     nn.BatchNorm2d(conv['out_channel']),
                     activation,
-                    torch.nn.Dropout(p=0.1)
+                    #torch.nn.Dropout(p=0.1)
             )
             )
         
@@ -108,7 +108,7 @@ class varNext(torch.nn.Module):
 
 
     def encode(self,x):
-        x = ckpt(self.encoder(x),2,x)
+        x = ckpt(self.encoder(x),2,x,use_reentrant=False)
         x = torch.flatten(x,start_dim=1)
         x = self.pack_LL(x)
         mu = self.mu(x)

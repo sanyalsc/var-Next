@@ -35,13 +35,16 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
 
     model.to(device)
     last_t = time.time()
+    best_val = torch.inf
     with open(os.path.join(output_dir,'logfile.txt'),'w') as rfi:
         for epoch in range(n_epoch):
             kl = True
             train_loss = train_epoch(model,device,train_loader,optim, kl,rfi)
             val_loss = test_epoch(model,device,val_loader)
             rfi.write(f'\n EPOCH {epoch+1}/{n_epoch} took {time.time()-last_t}s: train loss {train_loss}, val loss {val_loss}')
-            torch.save(model.state_dict(), os.path.join(output_dir,'model_wts.pt'))
+            if val_loss < best_val:
+                best_val = val_loss
+                torch.save(model.state_dict(), os.path.join(output_dir,'model_wts.pt'))
             last_t=time.time()
 
     torch.save(model.state_dict(), os.path.join(output_dir,'model_wts.pt'))
