@@ -1,0 +1,73 @@
+
+{"input_shape":[180,320],
+"learn_rate":1e-5,
+"layers":
+{
+"encoder":[
+    {"conv":
+        { "in_channel": 3,
+            "out_channel": 32,
+            "kernel_size": 3,
+            "kwargs":{"stride":2}
+        }
+    },
+    {"conv":
+        { "in_channel": 32,
+            "out_channel": 64,
+            "kernel_size": 5,
+            "kwargs":{"stride":2}
+        }
+    },
+    {"conv":
+        { "in_channel": 64,
+            "out_channel": 128,
+            "kernel_size": 5,
+            "kwargs":{"stride":2}
+        }
+    },
+    {"conv":
+        { "in_channel": 128,
+            "out_channel": 256,
+            "kernel_size": 3,
+            "kwargs":{"stride":1}
+        }
+    }
+],
+"uf-l":-1,
+"mu": 6048,
+"var":6048,
+"latent":6048,
+"decoder":[
+    {"conv":
+        { "in_channel": 256,
+            "out_channel": 128,
+            "kernel_size": 3,
+            "kwargs":{"stride":1}
+        }
+    },
+    {"conv":
+        { "in_channel": 128,
+            "out_channel": 64,
+            "kernel_size": 5,
+            "kwargs":{"stride": 2,
+        "output_padding":[0,1]}
+        }
+    },
+    {"conv":
+        { "in_channel": 64,
+            "out_channel": 32,
+            "kernel_size": 5,
+            "kwargs":{"stride":2}
+        }
+    },
+    {"conv":
+        { "in_channel": 32,
+            "out_channel": 3,
+            "kernel_size": 3,
+            "kwargs":{"stride":2,"output_padding":[1,1]}
+        }
+    }
+]
+
+}
+}
