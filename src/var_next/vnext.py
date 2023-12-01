@@ -124,8 +124,8 @@ class varNext(torch.nn.Module):
 
     def forward(self,x):
         x.requires_grad=True
-        x = ckpt(self.custom(self.encode),x)
-        x = ckpt(self.custom(self.decode),x)
+        x = ckpt(self.custom(self.encode),x,use_reentrant=False)
+        x = ckpt(self.custom(self.decode),x,use_reentrant=False)
         return x
     
     def custom(self, module):
