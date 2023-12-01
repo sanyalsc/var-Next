@@ -55,14 +55,15 @@ def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None, beta=1):
     for x, _ in dataloader: 
         # Move tensor to the proper device
         x = x.to(device)
-        y = vae(x)
-        # Evaluate loss
-        l1 = torch.nn.functional.mse_loss(y,x,reduction='sum')
-        if kl:
-            loss = l1 + beta*vae.kl
+        optimizer.zero_grad()
+        with torch.autocast("cuda"):
+            y = vae(x)
+            # Evaluate loss
+            l1 = torch.nn.functional.mse_loss(y,x,reduction='sum')
+            if kl:
+                loss = l1 + beta*vae.kl
 
         # Backward pass
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         # Print batch loss
