@@ -46,7 +46,7 @@ class varNext(torch.nn.Module):
             enc_layers.append(
                 nn.Sequential(
                     nn.Conv2d(conv['in_channel'],conv['out_channel'],conv['kernel_size'],**conv['kwargs']),
-                    nn.BatchNorm2d(conv['out_channel'],momentum=torch.sqrt(0.1)),
+                    nn.BatchNorm2d(conv['out_channel'],momentum=0.3162278), #sqrt(0.1) for checkpointing
                     activation,
                     #torch.nn.Dropout(p=0.1)
             )
