@@ -4,29 +4,30 @@ import time
 
 import torch
 from torchvision.datasets import ImageFolder
-from torch.utils.data import random_split, DataLoader
-from torchvision import transforms
+from torch.utils.data import DataLoader
 import json
 
 from var_next.vnext import varNext
+from annotation_dataloader import varDataset
 
-
-def set_up_dataset(data_dir):
-    dataset = ImageFolder(data_dir,transform=transforms.ToTensor())
-    train, val = random_split(dataset,[0.8, 0.2])
+def set_up_dataset(data_dir,annotation_path):
+    train_path = os.path.join(data_dir,'train')
+    val_path = os.path.join(data_dir,'val')
+    train = varDataset(train_path,annotation_path)
+    val = varDataset(val_path,annotation_path)
     train_set = DataLoader(train, batch_size=64, shuffle=True)
     val_set = DataLoader(val, batch_size=64, shuffle=True)
     return train_set, val_set
 
 
-def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results',beta=1):
+def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results', annotation_path='/scratch/ejg8qa/log_images_320/master_annot.csv',beta=1):
     test_id = os.path.splitext(os.path.basename(cfg_file))[0]
     output_dir = os.path.join(result_dir,f'{test_id}_beta_{beta}')
     os.makedirs(output_dir,exist_ok=True)
     
     with open(cfg_file,'r') as cfi:
         cfg = json.load(cfi)
-    train_loader, val_loader = set_up_dataset(data_dir)
+    train_loader, val_loader = set_up_dataset(data_dir,annotation_path)
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(f'Selected device: {device}')
@@ -36,35 +37,48 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
     model.to(device)
     last_t = time.time()
     best_val = torch.inf
+    kl = True
+    beta = cfg['beta']
     with open(os.path.join(output_dir,'logfile.txt'),'w') as rfi:
-        for epoch in range(n_epoch):
-            kl = True
-            train_loss = train_epoch(model,device,train_loader,optim, kl,rfi)
-            val_loss = test_epoch(model,device,val_loader)
+        for epoch, train_loss, val_loss in enumerate(run_epoch(model,device,train_loader,val_loader,optim,kl,rfi)):
             rfi.write(f'\n EPOCH {epoch+1}/{n_epoch} took {time.time()-last_t}s: train loss {train_loss}, val loss {val_loss}')
             if val_loss < best_val:
                 best_val = val_loss
                 torch.save(model.state_dict(), os.path.join(output_dir,'model_wts.pt'))
             last_t=time.time()
+            if epoch==n_epoch:
+                break
 
-    torch.save(model.state_dict(), os.path.join(output_dir,'model_wts.pt'))
+
+def run_epoch(model, device, train_loader, val_loader, optim ,kl=False, rfi=None, beta=2):
+    train_loss = train_epoch(model,device,train_loader,optim, kl,rfi,beta)
+    val_loss = test_epoch(model,device,val_loader,beta)
+    yield train_loss, val_loss
 
 
-def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None, beta=1):
+def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None, beta=2):
     # Set train mode for both the encoder and the decoder
     vae.train()
     train_loss = 0.0
     # Iterate the dataloader (we do not need the label values, this is unsupervised learning)
-    for x, _ in dataloader: 
+    for x, mask in dataloader: 
         # Move tensor to the proper device
         x = x.to(device)
+        mask = mask.to(device)
         optimizer.zero_grad()
         with torch.autocast("cuda"):
             y = vae(x)
+            xmask = x * mask
+            ymask = y * mask
+            shape = x.shape
+            scalef = torch.sum(mask,dim=(1,2,3))/(shape[1]*shape[2]*shape[3])
             # Evaluate loss
             l1 = torch.nn.functional.mse_loss(y,x,reduction='sum')
+            l2 = torch.sum(scalef * torch.nn.functional.mse_loss(ymask,xmask,reduction='none'))
+            
+            loss = l1 + l2
             if kl:
-                loss = l1 + beta*vae.kl
+                loss = loss + beta*vae.kl
 
         # Backward pass
         loss.backward()
@@ -79,17 +93,27 @@ def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None, beta=1):
     return train_loss / len(dataloader.dataset)
 
 
-def test_epoch(vae, device, dataloader, beta=1):
+def test_epoch(vae, device, dataloader, beta=2):
     # Set evaluation mode for encoder and decoder
     vae.eval()
     val_loss = 0.0
     with torch.no_grad(): # No need to track the gradients
-        for x, _ in dataloader:
+        for x, mask in dataloader:
             # Move tensor to the proper device
             x = x.to(device)
+            mask = mask.to(device)
             # Decode data
             y = vae(x)
-            loss = torch.nn.functional.mse_loss(y,x,reduction='sum') + beta*vae.kl
+            xmask = x * mask
+            ymask = y * mask
+            shape = x.shape
+            scalef = torch.sum(mask,dim=(1,2,3))/(shape[1]*shape[2]*shape[3])
+            # Evaluate loss
+
+            l1 = torch.nn.functional.mse_loss(y,x,reduction='sum')
+            l2 = torch.sum(scalef * torch.nn.functional.mse_loss(ymask,xmask,reduction='none'))
+            
+            loss = l1 + l2 + beta*vae.kl
             val_loss += loss.item()
 
     return val_loss / len(dataloader.dataset)
