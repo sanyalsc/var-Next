@@ -40,7 +40,8 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
     kl = True
     beta = cfg['beta']
     with open(os.path.join(output_dir,'logfile.txt'),'w') as rfi:
-        for epoch, train_loss, val_loss in enumerate(run_epoch(model,device,train_loader,val_loader,optim,kl,rfi,beta)):
+        for epoch, loss in enumerate(run_epoch(model,device,train_loader,val_loader,optim,kl,rfi,beta)):
+            train_loss, val_loss = loss
             rfi.write(f'\n EPOCH {epoch+1}/{n_epoch} took {time.time()-last_t}s: train loss {train_loss}, val loss {val_loss}')
             if val_loss < best_val:
                 best_val = val_loss
