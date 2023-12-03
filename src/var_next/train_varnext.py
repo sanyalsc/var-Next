@@ -51,14 +51,16 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
                 best_val = val_loss
                 torch.save(model.state_dict(), os.path.join(output_dir,'model_wts.pt'))
             last_t=time.time()
+
             if epoch==n_epoch:
                 break
 
 
 def run_epoch(model, device, train_loader, val_loader, optim ,kl=False, rfi=None, beta=2):
-    train_loss = train_epoch(model,device,train_loader,optim, kl,rfi,beta)
-    val_loss = test_epoch(model,device,val_loader,beta)
-    yield train_loss, val_loss
+    while True:
+        train_loss = train_epoch(model,device,train_loader,optim, kl,rfi,beta)
+        val_loss = test_epoch(model,device,val_loader,beta)
+        yield train_loss, val_loss
 
 
 def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None, beta=2):
