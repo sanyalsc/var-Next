@@ -113,6 +113,9 @@ class varNext(torch.nn.Module):
         x = self.pack_LL(x)
         mu = self.mu(x)
         sigma = self.sig(x)
+        return mu, sigma
+    
+    def bottleneck(self,mu,sigma):
         z = mu + torch.exp(sigma)*torch.randn_like(mu).to(self.device)
         self.kl = - 0.5 * torch.sum(1+ sigma - torch.square(mu) - torch.exp(sigma))
         return z
@@ -125,6 +128,7 @@ class varNext(torch.nn.Module):
     def forward(self,x):
         #x.requires_grad=True
         x = self.encode(x)
+        x = self.bottleneck(*x)
         x = self.decode(x)
         return x
     

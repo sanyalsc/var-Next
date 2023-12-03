@@ -10,10 +10,10 @@ import pandas as pd
 class varDataset(Dataset):
     def __init__(self,dirname,annot,gray=False):
         if gray:
-            trans = transforms.Compose[
+            trans = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Grayscale()
-            ]
+            ])
         else:
             trans = transforms.ToTensor()
 
