@@ -66,26 +66,26 @@ def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None, beta=2):
         x = x.to(device)
         mask = mask.to(device)
         optimizer.zero_grad()
-        with torch.autocast("cuda"):
-            y = vae(x)
-            xmask = x * mask
-            ymask = y * mask
-            shape = x.shape
-            scalef = torch.sum(mask,dim=(1,2,3))/(shape[1]*shape[2]*shape[3])
-            # Evaluate loss
-            l1 = torch.nn.functional.mse_loss(y,x,reduction='sum')
-            l2 = torch.sum(scalef * torch.sum(torch.nn.functional.mse_loss(ymask,xmask,reduction='none'),dim=(1,2,3)))
-            
-            loss = l1 + l2
-            if kl:
-                loss = loss + beta*vae.kl
+        y = vae(x)
+        xmask = x * mask
+        ymask = y * mask
+        shape = x.shape
+        scalef = torch.sum(mask,dim=(1,2,3))/(shape[1]*shape[2]*shape[3])
+        scalef[scalef!=0] = 1/scalef[scalef!=0]
+        # Evaluate loss
+        l1 = torch.nn.functional.mse_loss(y,x,reduction='sum')
+        l2 = torch.sum(scalef * torch.sum(torch.nn.functional.mse_loss(ymask,xmask,reduction='none'),dim=(1,2,3)))
+        
+        loss = l1 + l2
+        if kl:
+            loss = loss + beta*vae.kl
 
         # Backward pass
         loss.backward()
         optimizer.step()
         # Print batch loss
         if rfi:
-            rfi.write(f'\n sb loss, mse:{loss.item()}, B*kl: {beta*vae.kl}')
+            rfi.write(f'\n sb loss, l1:{l1}, l2: {l2}, B*kl: {beta*vae.kl}')
 
         print(f'partial train loss (single batch): {loss.item()}\r')
         train_loss+=loss.item()
@@ -97,24 +97,23 @@ def test_epoch(vae, device, dataloader, beta=2):
     # Set evaluation mode for encoder and decoder
     vae.eval()
     val_loss = 0.0
-    with torch.no_grad(): # No need to track the gradients
-        for x, mask in dataloader:
-            # Move tensor to the proper device
-            x = x.to(device)
-            mask = mask.to(device)
-            # Decode data
-            y = vae(x)
-            xmask = x * mask
-            ymask = y * mask
-            shape = x.shape
-            scalef = torch.sum(mask,dim=(1,2,3))/(shape[1]*shape[2]*shape[3])
-            # Evaluate loss
+    for x, mask in dataloader:
+        # Move tensor to the proper device
+        x = x.to(device)
+        mask = mask.to(device)
+        # Decode data
+        y = vae(x)
+        xmask = x * mask
+        ymask = y * mask
+        shape = x.shape
+        scalef = torch.sum(mask,dim=(1,2,3))/(shape[1]*shape[2]*shape[3])
+        # Evaluate loss
 
-            l1 = torch.nn.functional.mse_loss(y,x,reduction='sum')
-            l2 = torch.sum(scalef * torch.sum(torch.nn.functional.mse_loss(ymask,xmask,reduction='none'),dim=(1,2,3)))
-            
-            loss = l1 + l2 + beta*vae.kl
-            val_loss += loss.item()
+        l1 = torch.nn.functional.mse_loss(y,x,reduction='sum')
+        l2 = torch.sum(scalef * torch.sum(torch.nn.functional.mse_loss(ymask,xmask,reduction='none'),dim=(1,2,3)))
+        
+        loss = l1 + l2 + beta*vae.kl
+        val_loss += loss.item()
 
     return val_loss / len(dataloader.dataset)
 
