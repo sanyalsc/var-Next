@@ -74,7 +74,7 @@ def train_epoch(vae, device, dataloader, optimizer,kl=False, rfi=None, beta=2):
             scalef = torch.sum(mask,dim=(1,2,3))/(shape[1]*shape[2]*shape[3])
             # Evaluate loss
             l1 = torch.nn.functional.mse_loss(y,x,reduction='sum')
-            l2 = torch.sum(scalef * torch.nn.functional.mse_loss(ymask,xmask,reduction='none'))
+            l2 = torch.sum(scalef * torch.sum(torch.nn.functional.mse_loss(ymask,xmask,reduction='none'),dim=(1,2,3)))
             
             loss = l1 + l2
             if kl:
@@ -111,7 +111,7 @@ def test_epoch(vae, device, dataloader, beta=2):
             # Evaluate loss
 
             l1 = torch.nn.functional.mse_loss(y,x,reduction='sum')
-            l2 = torch.sum(scalef * torch.nn.functional.mse_loss(ymask,xmask,reduction='none'))
+            l2 = torch.sum(scalef * torch.sum(torch.nn.functional.mse_loss(ymask,xmask,reduction='none'),dim=(1,2,3)))
             
             loss = l1 + l2 + beta*vae.kl
             val_loss += loss.item()
