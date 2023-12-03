@@ -7,7 +7,7 @@
 {
 "encoder":[
     {"conv":
-        { "in_channel": 3,
+        { "in_channel": 1,
             "out_channel": 32,
             "kernel_size": 3,
             "kwargs":{"stride":2}
@@ -64,7 +64,7 @@
     },
     {"conv":
         { "in_channel": 32,
-            "out_channel": 3,
+            "out_channel": 1,
             "kernel_size": 3,
             "kwargs":{"stride":2,"output_padding":[1,1]}
         }
