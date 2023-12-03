@@ -26,7 +26,6 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
         cfg = json.load(cfi)
     test_id = os.path.splitext(os.path.basename(cfg_file))[0]
     output_dir = os.path.join(result_dir,f'{test_id}_beta_{cfg["beta"]}')
-    os.makedirs(output_dir,exist_ok=True)
     if "gray" in cfg:
         gray = cfg['gray']
     else:
@@ -47,6 +46,7 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
     best_val = torch.inf
     kl = True
     beta = cfg['beta']
+    os.makedirs(output_dir,exist_ok=True)
     with open(os.path.join(output_dir,'logfile.txt'),'w') as rfi:
         for epoch, loss in enumerate(run_epoch(model,device,train_loader,val_loader,optim,kl,rfi,beta)):
             train_loss, val_loss = loss
@@ -54,6 +54,8 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
             if val_loss < best_val:
                 best_val = val_loss
                 torch.save(model.state_dict(), os.path.join(output_dir,'model_wts.pt'))
+            else:
+                break
             last_t=time.time()
 
             if epoch==n_epoch:
