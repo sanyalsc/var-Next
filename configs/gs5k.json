@@ -35,9 +35,9 @@
     }
 ],
 "uf-l":-1,
-"mu": 6048,
-"var":6048,
-"latent":6048,
+"mu": 5000,
+"var":5000,
+"latent":5000,
 "decoder":[
     {"conv":
         { "in_channel": 256,

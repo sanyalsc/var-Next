@@ -8,8 +8,16 @@ import pandas as pd
 
 
 class varDataset(Dataset):
-    def __init__(self,dirname,annot):
-        self.data = ImageFolder(dirname,transform=transforms.ToTensor())
+    def __init__(self,dirname,annot,gray=False):
+        if gray:
+            trans = transforms.Compose[
+                transforms.ToTensor(),
+                transforms.Grayscale()
+            ]
+        else:
+            trans = transforms.ToTensor()
+
+        self.data = ImageFolder(dirname,transform=trans)
         self.annot = pd.read_csv(annot)
         self.annot = self.annot.set_index('fname')
         

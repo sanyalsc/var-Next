@@ -10,11 +10,11 @@ import json
 from var_next.vnext import varNext
 from annotation_dataloader import varDataset
 
-def set_up_dataset(data_dir,annotation_path):
+def set_up_dataset(data_dir,annotation_path,gray=False):
     train_path = os.path.join(data_dir,'train')
     val_path = os.path.join(data_dir,'val')
-    train = varDataset(train_path,annotation_path)
-    val = varDataset(val_path,annotation_path)
+    train = varDataset(train_path,annotation_path,gray=gray)
+    val = varDataset(val_path,annotation_path,gray=gray)
     train_set = DataLoader(train, batch_size=64, shuffle=True)
     val_set = DataLoader(val, batch_size=64, shuffle=True)
     return train_set, val_set
@@ -27,7 +27,11 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
     test_id = os.path.splitext(os.path.basename(cfg_file))[0]
     output_dir = os.path.join(result_dir,f'{test_id}_beta_{cfg["beta"]}')
     os.makedirs(output_dir,exist_ok=True)
-    train_loader, val_loader = set_up_dataset(data_dir,annotation_path)
+    if "gray" in cfg:
+        gray = cfg['gray']
+    else:
+        gray = False
+    train_loader, val_loader = set_up_dataset(data_dir,annotation_path,gray=gray)
     print(f'running with :{cfg}')
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(f'Selected device: {device}')
