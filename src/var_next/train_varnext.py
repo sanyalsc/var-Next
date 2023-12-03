@@ -20,15 +20,15 @@ def set_up_dataset(data_dir,annotation_path):
     return train_set, val_set
 
 
-def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results', annotation_path='/scratch/ejg8qa/log_images_320/master_annot.csv',beta=1):
-    test_id = os.path.splitext(os.path.basename(cfg_file))[0]
-    output_dir = os.path.join(result_dir,f'{test_id}_beta_{beta}')
-    os.makedirs(output_dir,exist_ok=True)
+def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results', annotation_path='/scratch/ejg8qa/log_images_320/master_annot.csv'):
     
     with open(cfg_file,'r') as cfi:
         cfg = json.load(cfi)
+    test_id = os.path.splitext(os.path.basename(cfg_file))[0]
+    output_dir = os.path.join(result_dir,f'{test_id}_beta_{cfg["beta"]}')
+    os.makedirs(output_dir,exist_ok=True)
     train_loader, val_loader = set_up_dataset(data_dir,annotation_path)
-
+    print(f'running with :{cfg}')
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(f'Selected device: {device}')
     model = varNext(cfg, device)
@@ -40,7 +40,7 @@ def train(cfg_file,data_dir, n_epoch=5, result_dir='/scratch/ejg8qa/360_results'
     kl = True
     beta = cfg['beta']
     with open(os.path.join(output_dir,'logfile.txt'),'w') as rfi:
-        for epoch, train_loss, val_loss in enumerate(run_epoch(model,device,train_loader,val_loader,optim,kl,rfi)):
+        for epoch, train_loss, val_loss in enumerate(run_epoch(model,device,train_loader,val_loader,optim,kl,rfi,beta)):
             rfi.write(f'\n EPOCH {epoch+1}/{n_epoch} took {time.time()-last_t}s: train loss {train_loss}, val loss {val_loss}')
             if val_loss < best_val:
                 best_val = val_loss
@@ -125,7 +125,7 @@ def load_args():
     parser.add_argument('--data',required=True,help='Input directory of images')
     parser.add_argument('--output',default='/scratch/ejg8qa/360_results',help='output directory for results and weights')
     parser.add_argument('--n-epoch',default=5,type=int,help='number of epochs')
-    parser.add_argument('--beta',default=1,type=int,help='kld beta value')
+    #parser.add_argument('--annot-p',default=1,type=int,help='kld beta value')
     return parser.parse_args()
 
 if __name__ == '__main__':
