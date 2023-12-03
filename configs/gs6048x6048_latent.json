@@ -2,6 +2,7 @@
 {"input_shape":[180,320],
 "learn_rate":1e-5,
 "gray":1,
+"beta":200,
 "layers":
 {
 "encoder":[
